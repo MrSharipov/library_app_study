@@ -6,7 +6,7 @@ const app = express();
 
 app.use(bodyParser.json());
 
-app.use("/books", BookRouter)
+app.use("/books", BookRouter);
 
 const PORT = 3003;
 app.listen(PORT, ()=> {
