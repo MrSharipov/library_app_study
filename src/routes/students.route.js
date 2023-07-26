@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const studentsService = require("../service/students.service");
+const { authorize } = require("../middleware/auth.middleware");
 
 //get all
-router.get("/", (req, res) => {
+router.get("/", authorize, (req, res) => {
   res.json(studentsService.getStudents());
 });
 
