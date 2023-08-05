@@ -5,10 +5,15 @@ const { findUserByUsername } = require("../service/user.service");
 
 function generateToken(user) {
   return jwt.sign(
-    { name: user.name, username: user.username, role: user.role },
+    {
+      name: user.name,
+      username: user.username,
+      role: user.role,
+      blocked: user.blocked,
+    },
     "your-secret-key",
     {
-      expiresIn: "30s",
+      expiresIn: "1hr",
     }
   );
 }
@@ -23,7 +28,6 @@ function authorize(req, res, next) {
   try {
     const decoded = jwt.verify(token, "your-secret-key");
     req.user = decoded;
-    console.log({ decoded });
     next();
   } catch (error) {
     return res.status(403).json({ error: "Invalid token" });
@@ -34,7 +38,15 @@ async function authenticate(req, res, next) {
   const { username, password } = req.body;
   const user = findUserByUsername(username);
   if (!user) {
-    return res.status(401).json({ error: "Invalid username or password" });
+    return res
+      .status(404)
+      .json({ error: "User is not found: invalid username or password" });
+  }
+
+  if (user.blocked) {
+    return res
+      .status(403)
+      .json({ error: "This account has been blocked by admin" });
   }
 
   const isPasswordValid = await bcrypt.compare(password, user.password);
