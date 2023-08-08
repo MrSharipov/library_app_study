@@ -14,15 +14,13 @@ router.post("/register", async (req, res) => {
     });
   }
 
-  const existingUser = usersService.findUserByUsername(username);
+  const existingUser = await usersService.findUserByUsername(username);
 
   if (existingUser) {
     return res.status(409).json({ error: "Username already exists" });
   }
 
-  await usersService.addUser(name, age, email, group, username, password);
-
-  res.status(201).json({ message: "User registered successfully" });
+  await usersService.addUser(req, res);
 });
 
 // Route to log in and get the token
@@ -34,29 +32,32 @@ router.post("/login", authenticate, (req, res) => {
 });
 
 //get all
-router.get("/", authorize, (req, res) => {
-  res.json(usersService.getUsers());
+router.get("/", authorize, async (req, res) => {
+  await await usersService.getUsers(res);
 });
 
 //get by id
-router.get("/:id", (req, res) => {
+router.get("/:id", async (req, res) => {
   const { id } = req.params;
-  res.json(usersService.getUserById(id));
+  return await usersService.getUserById(id, res);
 });
 
 //update student
-router.put("/:id", (req, res) => {
+router.put("/:id", async (req, res) => {
   const { id } = req.params;
   //Validate input data
   const validatedData = usersService.validateUpdateInput(req.body);
   // Update user data
-  res.json(usersService.updateUser({ userId: id, updateData: validatedData }));
+  return await usersService.updateUser(res, {
+    userId: id,
+    updateData: validatedData,
+  });
 });
 
 //remove student
-router.delete("/:id", (req, res) => {
+router.delete("/:id", async (req, res) => {
   const { id } = req.params;
-  res.json(usersService.removeUser(id));
+  return await usersService.removeUser(res, id);
 });
 
 router.post("/take", authorize, (req, res) => {
