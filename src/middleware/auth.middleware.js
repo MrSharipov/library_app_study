@@ -36,7 +36,7 @@ function authorize(req, res, next) {
 
 async function authenticate(req, res, next) {
   const { username, password } = req.body;
-  const user = findUserByUsername(username);
+  const user = await findUserByUsername(username);
   if (!user) {
     return res
       .status(404)

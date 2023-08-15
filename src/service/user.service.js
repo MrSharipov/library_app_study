@@ -1,14 +1,13 @@
 const bcrypt = require("bcrypt");
 const { v4: uuidv4 } = require("uuid");
-const UsersDB = require("../db/users.db");
+const User = require("../database/models/user.model");
 const bookService = require("./books.service");
 
 // Function to add a new user
-async function addUser(name, age, email, group, username, password) {
+async function addUser(req, res) {
+  const { name, age, email, group, username, password } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
-
-  UsersDB.push({
-    id: uuidv4(),
+  const user = await new User({
     name,
     age,
     email,
@@ -20,30 +19,31 @@ async function addUser(name, age, email, group, username, password) {
     password: hashedPassword,
     role: "USER",
   });
+
+  try {
+    await user.save();
+    res.status(201).json(user);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 }
 
 // Function to find a user by username
-function findUserByUsername(username) {
-  return UsersDB.find((user) => user.username === username);
-}
-
-function getUsers() {
-  return UsersDB;
-}
-
-function getUserById(id) {
-  const index = UsersDB.findIndex((user) => {
-    return user.id === id;
-  });
-
-  if (index === -1) {
-    throw new Error("User is not found");
-  } else {
-    return {
-      status: "success",
-      student: UsersDB[index],
-    };
+async function findUserByUsername(username) {
+  try {
+    return await User.findOne({ username: username }).exec();
+  } catch (err) {
+    throw err;
   }
+}
+
+async function getUsers() {
+  return await User.find();
+}
+
+async function getUserById(id) {
+  const user = await User.findById(id);
+  return user;
 }
 
 function updateUser(params) {
@@ -64,21 +64,17 @@ function updateUser(params) {
   };
 }
 
-function removeUser(id) {
-  const index = UsersDB.findIndex((user) => {
-    return user.id === id;
-  });
-
-  if (index === -1) {
-    throw new Error("User is not found");
+async function removeUser(res, id) {
+  try {
+    const user = await User.findByIdAndDelete(id);
+    if (!user) {
+      res.status(404).json("User is not found");
+    } else {
+      res.send(`User has been deleted..`);
+    }
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
-
-  const deletedUser = UsersDB.splice(index, 1);
-
-  return {
-    status: "success",
-    user: deletedUser,
-  };
 }
 
 function validateCreateInput(params) {

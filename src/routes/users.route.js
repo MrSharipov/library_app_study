@@ -14,15 +14,15 @@ router.post("/register", async (req, res) => {
     });
   }
 
-  const existingUser = usersService.findUserByUsername(username);
+  const existingUser = await usersService.findUserByUsername(username);
 
   if (existingUser) {
     return res.status(409).json({ error: "Username already exists" });
+  } else {
+    await usersService.addUser(req, res);
+    //Edited
+    // res.status(201).json({ message: "User registered successfully" });
   }
-
-  await usersService.addUser(name, age, email, group, username, password);
-
-  res.status(201).json({ message: "User registered successfully" });
 });
 
 // Route to log in and get the token
@@ -34,14 +34,15 @@ router.post("/login", authenticate, (req, res) => {
 });
 
 //get all
-router.get("/", authorize, (req, res) => {
-  res.json(usersService.getUsers());
+router.get("/", authorize, async (req, res) => {
+  const users = await usersService.getUsers();
+  res.json(users);
 });
 
 //get by id
-router.get("/:id", (req, res) => {
+router.get("/:id", async (req, res) => {
   const { id } = req.params;
-  res.json(usersService.getUserById(id));
+  res.json(await usersService.getUserById(id));
 });
 
 //update student
@@ -56,7 +57,7 @@ router.put("/:id", (req, res) => {
 //remove student
 router.delete("/:id", (req, res) => {
   const { id } = req.params;
-  res.json(usersService.removeUser(id));
+  return usersService.removeUser(res, id); // Edited
 });
 
 router.post("/take", authorize, (req, res) => {
