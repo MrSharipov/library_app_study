@@ -49,9 +49,9 @@ router.get("/:id", async (req, res) => {
 router.put("/:id", (req, res) => {
   const { id } = req.params;
   //Validate input data
-  const validatedData = usersService.validateUpdateInput(req.body);
+  const dataForUpdate = usersService.validateUpdateInput(req.body);
   // Update user data
-  res.json(usersService.updateUser({ userId: id, updateData: validatedData }));
+  return usersService.updateUser(res, id, dataForUpdate);
 });
 
 //remove student

@@ -1,32 +1,30 @@
-const library = require("../db/library.db");
-const { v4: uuidv4 } = require("uuid");
+const Book = require("../database/models/book.model");
 
-function getAll() {
-  return library;
+async function getAll() {
+  return await Book.find();
 }
 
-function getById(id) {
-  const index = library.findIndex((book) => {
-    return book.id === id;
-  });
-  if (index === -1) {
-    return {
-      error: "Book is not found",
-    };
-  } else {
-    return {
-      result: "Successfully found",
-      book: library[index],
-    };
+async function getById(res, id) {
+  const book = await Book.findById(id);
+  if (!book) {
+    return res.status(404).json({ error: "Book is not found" });
   }
+  return res.status(200).json(book);
 }
 
-function create(newBook) {
-  library.push(newBook);
-  return {
-    result: "New book has been successfully added",
-    newBook,
-  };
+async function create(res, { title, author, amount }) {
+  const book = await new Book({
+    title,
+    author,
+    amount,
+  });
+
+  try {
+    await book.save();
+    res.status(201).json(book);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 }
 
 function update(id, updateParams) {
@@ -47,41 +45,27 @@ function update(id, updateParams) {
   }
 }
 
-function validateCreateInputs({ title, author, createdAt }) {
+function validateCreateInputs(req, res) {
+  const { title, author, amount } = req.body;
   const result = {};
 
-  result.id = uuidv4();
-
   if (!title) {
-    return {
-      status: 404,
-      message: "Title is not found",
-    };
+    return res.status(404).json({ error: "title is not found" });
   }
 
   result.title = title;
 
   if (!author) {
-    return {
-      status: 404,
-      message: "Author is not found",
-    };
+    return res.status(404).json({ error: "author is not found" });
   }
   result.author = author;
 
-  if (!createdAt) {
-    return {
-      status: 404,
-      message: "CreatedAt is not found",
-    };
+  if (!amount) {
+    return res.status(404).json({ error: "amount is not found" });
   }
-  result.createdAt = createdAt;
+  result.amount = amount;
 
-  return {
-    status: 200,
-    message: "All fields successfully validated",
-    result,
-  };
+  return result;
 }
 
 function validateUpdateInputs({ title, author, createdAt }) {

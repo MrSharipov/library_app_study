@@ -46,22 +46,18 @@ async function getUserById(id) {
   return user;
 }
 
-function updateUser(params) {
-  const index = UsersDB.findIndex((user) => {
-    return user.id === params.userId;
-  });
+async function updateUser(res, id, dataForUpdate) {
+  try {
+    const user = await User.findByIdAndUpdate(id, dataForUpdate, { new: true });
 
-  if (index === -1) {
-    throw new Error("User data is not fount");
+    if (!user) {
+      res.status(404).json({ error: "User is not found" });
+    } else {
+      res.json({ result: "User was successfully updated" });
+    }
+  } catch (err) {
+    throw err;
   }
-
-  const updatedUser = { ...UsersDB[index], ...params.updateData };
-  UsersDB[index] = updatedUser;
-
-  return {
-    status: "success",
-    student: updatedUser,
-  };
 }
 
 async function removeUser(res, id) {
