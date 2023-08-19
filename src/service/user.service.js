@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const { v4: uuidv4 } = require("uuid");
 const User = require("../database/models/user.model");
-const bookService = require("./books.service");
+const Book = require("../database/models/book.model");
 
 // Function to add a new user
 async function addUser(req, res) {
@@ -104,20 +104,29 @@ function validateCreateInput(params) {
   return newUser;
 }
 
-const takeBook = (user, bookId) => {
-  if (user.role === "STUDENT") {
-    if (user.blocked) throw new Error("You are blocked by admin");
-    const { book } = bookService.getById(bookId);
-    const index = UsersDB.findIndex((student) => {
-      return student.username === user.username;
+const takeBook = async (res, user, bookId) => {
+  const userDocument = await findUserByUsername(user.username);
+  try {
+    const book = await Book.findById(bookId);
+    if (!book) {
+      res.status(404).json({ error: "Book is not found" });
+    }
+    const isBookExist = userDocument.taken.find((b) => {
+      return (b.bookId = bookId);
     });
-    UsersDB[index].taken.push({
-      book_id: book.id,
-      time: Date.now(),
-    });
-    return UsersDB[index];
-  } else {
-    throw new Error("You don't have a right to rent a book");
+
+    if (!isBookExist) {
+      userDocument.taken.push({
+        date: Date.now(),
+        bookId,
+      });
+      await userDocument.save();
+      res.status(200).json({ result: `Book has been successfully taken` });
+    } else {
+      res.status(200).json({ error: "Book has already been taken by you" });
+    }
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 };
 

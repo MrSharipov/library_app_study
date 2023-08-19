@@ -19,20 +19,15 @@ router.post("/create", (req, res) => {
 });
 
 router.put("/edit/:id", (req, res) => {
-  const validationResult = booksService.validateUpdateInputs(req.body);
+  const dataForUpdate = booksService.validateUpdateInputs(req.body);
   const { id } = req.params;
 
-  if (validationResult.status === 200 && id) {
-    res.send(booksService.update(id, validationResult.result));
-  } else {
-    res.status(validationResult.status);
-    res.json({ error: validationResult.message });
-  }
+  return booksService.update(res, id, dataForUpdate);
 });
 
 router.delete("/delete/:id", (req, res) => {
   const { id } = req.params;
-  res.json(booksService.remove(id));
+  return booksService.remove(res, id);
 });
 
 module.exports = router;

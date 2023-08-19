@@ -27,21 +27,17 @@ async function create(res, { title, author, amount }) {
   }
 }
 
-function update(id, updateParams) {
-  const index = library.findIndex((book) => {
-    return book.id === id;
-  });
+async function update(res, id, dataForUpdate) {
+  try {
+    const book = await Book.findByIdAndUpdate(id, dataForUpdate, { new: true });
 
-  if (index === -1) {
-    return {
-      error: "Book is not found",
-    };
-  } else {
-    library[index] = { ...library[index], ...updateParams };
-    return {
-      result: "Book has been successfully updated",
-      updatedBook: library[index],
-    };
+    if (!book) {
+      res.status(404).json({ error: "Book is not found" });
+    } else {
+      res.json({ result: "Book was successfully updated" });
+    }
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 }
 
@@ -68,7 +64,7 @@ function validateCreateInputs(req, res) {
   return result;
 }
 
-function validateUpdateInputs({ title, author, createdAt }) {
+function validateUpdateInputs({ title, author, amount }) {
   const result = {};
   if (title) {
     result.title = title;
@@ -76,38 +72,24 @@ function validateUpdateInputs({ title, author, createdAt }) {
   if (author) {
     result.author = author;
   }
-  if (createdAt) {
-    result.createdAt = createdAt;
+  if (amount) {
+    result.amount = amount;
   }
-  if (Object.keys(result).length === 0) {
-    return {
-      status: 400,
-      message: "At least one field should be filled",
-      result,
-    };
-  } else {
-    return {
-      status: 200,
-      message: "Successfully validated",
-      result,
-    };
-  }
+
+  return result;
 }
 
-function remove(id) {
-  const index = library.findIndex((book) => {
-    return book.id === id;
-  });
-  if (index === -1) {
-    return {
-      error: "Book is not found",
-    };
-  } else {
-    const deletedBook = library.splice(index, 1);
-    return {
-      result: "Successfully deleted",
-      deletedBook,
-    };
+async function remove(res, id) {
+  try {
+    const book = await Book.findByIdAndDelete(id);
+
+    if (!book) {
+      res.status(404).json("Book is not found");
+    } else {
+      res.send(`Book has been deleted..`);
+    }
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 }
 
